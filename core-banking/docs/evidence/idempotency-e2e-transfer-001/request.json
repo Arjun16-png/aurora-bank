@@ -1,0 +1,7 @@
+{
+  "source_account_number": "AURORA-TEST-000001",
+  "destination_account_number": "AURORA-TEST-000002",
+  "amount": 100000,
+  "currency": "IDR",
+  "idempotency_key": "e2e-transfer-001"
+}

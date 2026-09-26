@@ -1,0 +1,2 @@
+{"accounts" : [{"account_number":"AURORA-TEST-000001","available_balance":400000.00,"ledger_balance":400000.00}, 
+ {"account_number":"AURORA-TEST-000002","available_balance":200000.00,"ledger_balance":200000.00}], "matching_transactions" : 0, "transactions" : 1, "transaction_accounts" : 2, "journal_entries" : 1, "journal_lines" : 2, "ledger_entries" : 2}
