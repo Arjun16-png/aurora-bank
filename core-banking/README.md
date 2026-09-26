@@ -69,3 +69,29 @@ Each test creates an isolated schema, applies the unchanged project schema and s
 - `internal/service`: validation, locking order and transfer business logic
 - `internal/repository`: PostgreSQL transactions and postings
 - `internal/model`: request/result models and exact monetary arithmetic
+
+### Transfer hardening coverage
+
+The PostgreSQL suite exercises the real HTTP handler/service/repository for successful requests, validation failures and sequential retries. Database correctness and concurrency checks use real PostgreSQL transactions, without mocks. Each test gets an isolated schema and full row snapshots detect changes to balances, timestamps, metadata and financial records.
+
+| Test | Assertions |
+| --- | --- |
+| `TestPostgresSuccessfulTransfer` | Both balances change exactly once; POSTED transaction and journal; one journal; balanced debit/credit lines; two linked ledger entries with correct historical balances |
+| `TestPostgresRejectedTransfers` | Insufficient balance, same account, zero/negative amounts, missing account, currency mismatch, overflow, and every schema-valid non-ACTIVE status on either account; exact database snapshots unchanged and zero financial records |
+| `TestPostgresDuplicateIdempotencyKey` | Identical retry returns the original response with no writes; changed amount/source/destination/currency returns 409; historical replay remains stable after another transfer and account blocking |
+| `TestPostgresRollback` | Test-only failures after transaction insertion and after all financial writes; full rollback of all rows and both balances; original key succeeds after the fault is removed |
+| `TestPostgresConcurrentDoubleSpend` | Source 100000; two simultaneous transfers of 80000 to different destinations; exactly one success and one insufficient-balance rejection; source ends at 20000; no negative balance update; ledger movements reconcile with all balances |
+| `TestPostgresConcurrentIdempotency` | Eight concurrent same-key requests post once; conflicting amounts split into identical successful replays and conflicts, still with one posting |
+| `TestPostgresOpposingTransfers` | Eight opposite-direction transfers complete without deadlock and preserve total balances |
+| `TestPostgresLedgerImmutable` | UPDATE and DELETE rejected by the existing ledger trigger, with no database changes |
+
+`INACTIVE` is not a valid account status in the existing schema; rejection tests cover `PENDING`, `DORMANT`, `BLOCKED`, and `CLOSED` on both source and destination.
+
+Concurrency tests hold the source row lock and wait until PostgreSQL reports all competing requests blocked on locks before releasing them. They use bounded timeouts instead of assuming simultaneous execution from goroutine scheduling. Fault-injection and negative-balance guard triggers exist only in temporary test schemas; production schema files are unchanged.
+
+Repeat the contention scenarios with the race detector:
+
+```sh
+TEST_DATABASE_URL='postgres://postgres:postgres@localhost:5432/aurorabank_test?sslmode=disable' \
+  go test -race -count=25 -run 'TestPostgres(Concurrent|Opposing)' ./internal/repository
+```

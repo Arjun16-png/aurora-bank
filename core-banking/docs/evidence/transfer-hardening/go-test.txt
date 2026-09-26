@@ -1,0 +1,5 @@
+?   	aurora-bank/core-banking/cmd/server	[no test files]
+ok  	aurora-bank/core-banking/internal/httpapi	(cached)
+ok  	aurora-bank/core-banking/internal/model	(cached)
+ok  	aurora-bank/core-banking/internal/repository	1.784s
+ok  	aurora-bank/core-banking/internal/service	0.302s

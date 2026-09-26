@@ -1,0 +1,1 @@
+ok  	aurora-bank/core-banking/internal/repository	8.421s
